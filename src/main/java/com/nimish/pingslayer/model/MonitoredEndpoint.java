@@ -1,6 +1,8 @@
 package com.nimish.pingslayer.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,4 +29,6 @@ public class MonitoredEndpoint {
   @Min(1) @Max(60) private int timeoutSeconds = 5;
   private boolean active = true;
   private Instant lastCheckedAt;
+  @Enumerated(EnumType.STRING)
+  private EndpointStatus status = EndpointStatus.UNKNOWN;
 }

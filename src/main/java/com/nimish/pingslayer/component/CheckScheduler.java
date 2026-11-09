@@ -1,4 +1,4 @@
-package com.nimish.pingslayer.config;
+package com.nimish.pingslayer.component;
 
 import com.nimish.pingslayer.model.MonitoredEndpoint;
 import com.nimish.pingslayer.repository.CheckResultRepository;
