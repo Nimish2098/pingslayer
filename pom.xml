@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.2</version>
+		<version>3.3.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.nimish</groupId>
@@ -34,6 +34,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
+		<!-- 10. Spring Boot Starter Test (JUnit 5, Mockito, AssertJ) -->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -60,11 +61,12 @@
 			</dependency>
 
 			<!-- 4. PostgreSQL Driver (Compatible with TimescaleDB hypertables and JSONB) -->
-			<dependency>
-				<groupId>org.postgresql</groupId>
-				<artifactId>postgresql</artifactId>
-				<scope>runtime</scope>
-			</dependency>
+<!--			<dependency>-->
+<!--				<groupId>org.postgresql</groupId>-->
+<!--				<artifactId>postgresql</artifactId>-->
+<!--				<scope>runtime</scope>-->
+<!--			</dependency>-->
+		<dependency><groupId>com.h2database</groupId><artifactId>h2</artifactId><scope>runtime</scope></dependency>
 
 			<!-- 5. Flyway (Database Migrations for TimescaleDB extensions and tables) -->
 			<dependency>
@@ -105,12 +107,7 @@
 
 			<!--- - - Testing Dependencies - - - -->
 
-			<!-- 10. Spring Boot Starter Test (JUnit 5, Mockito, AssertJ) -->
-			<dependency>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-test</artifactId>
-				<scope>test</scope>
-			</dependency>
+
 
 			<!-- 11. WireMock (For mocking target APIs during contract engine testing) -->
 			<dependency>
@@ -119,6 +116,24 @@
 				<version>3.9.1</version>
 				<scope>test</scope>
 			</dependency>
+
+		<!-- Reactor Test for StepVerifier -->
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- OkHttp MockWebServer -->
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>mockwebserver</artifactId>
+			<version>4.12.0</version>
+			<scope>test</scope>
+		</dependency>
+
+
+
 
 	</dependencies>
 
