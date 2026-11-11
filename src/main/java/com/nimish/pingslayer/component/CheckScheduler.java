@@ -1,5 +1,6 @@
 package com.nimish.pingslayer.component;
 
+import com.nimish.pingslayer.model.CheckResult;
 import com.nimish.pingslayer.model.MonitoredEndpoint;
 import com.nimish.pingslayer.repository.CheckResultRepository;
 import com.nimish.pingslayer.repository.EndpointRepository;
@@ -30,6 +31,7 @@ public class CheckScheduler {
 
     Flux.fromIterable(due)
         .flatMap(ep -> checker.check(ep)
+                              .cast(CheckResult.class) // Ensures the type is CheckResult
                               .publishOn(Schedulers.boundedElastic()) // JPA is blocking, keep it off Netty threads
                               .doOnNext(r -> {
                                 results.save(r);

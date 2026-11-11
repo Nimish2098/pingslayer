@@ -1,10 +1,9 @@
 package com.nimish.pingslayer.service;
 
-import com.nimish.pingslayer.model.EndpointStatus;
-import com.nimish.pingslayer.model.HealthLog;
+import com.nimish.pingslayer.model.CheckResult;
 import com.nimish.pingslayer.model.MonitoredEndpoint;
+import com.nimish.pingslayer.repository.CheckResultRepository;
 import com.nimish.pingslayer.repository.EndpointRepository;
-import com.nimish.pingslayer.repository.HealthLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,7 @@ public class PollingService {
   private static final int MAX_CONCURRENCY = 200;
 
   private final EndpointRepository endpoints;
-  private final HealthLogRepository healthLogs;
+  private final CheckResultRepository checkResultRepository;
   private final HealthCheckService checker;
 
   private final Scheduler virtualScheduler =
@@ -44,14 +43,15 @@ public class PollingService {
     return due.size();
   }
 
-  Mono<HealthLog> pollOne(MonitoredEndpoint ep) {
+  Mono<CheckResult> pollOne(MonitoredEndpoint ep) {
     return checker.check(ep)
                   .publishOn(virtualScheduler)             // persistence on a virtual thread
                   .doOnNext(h -> {
-                    healthLogs.save(h);
-                    endpoints.updateStatus(ep.getId(), h.getStatus(), h.getCheckedAt());
-                    if (h.getStatus() == EndpointStatus.DOWN) {
-                      log.warn("DOWN {} ({}): {}", ep.getName(), h.getStatusCode(), h.getErrorMessage());
+                    checkResultRepository.save(h);
+                    ep.setLastCheckedAt(h.getCheckedAt());
+                    endpoints.save(ep);
+                    if (!h.isSuccess()) {
+                      log.warn("DOWN {} ({}): {}", ep.getName(), h.getStatusCode(), h.getError());
                     }
                   })
                   .onErrorResume(e -> {                    // a DB hiccup must not kill the whole batch
