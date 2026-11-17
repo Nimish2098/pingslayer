@@ -10,6 +10,8 @@ import lombok.Setter;
 
 import java.time.Instant;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "check_result")
 public class CheckResult {

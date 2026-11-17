@@ -61,13 +61,12 @@
 				<artifactId>spring-boot-starter-data-jpa</artifactId>
 			</dependency>
 
-			<!-- 4. PostgreSQL Driver (Compatible with TimescaleDB hypertables and JSONB) -->
-<!--			<dependency>-->
-<!--				<groupId>org.postgresql</groupId>-->
-<!--				<artifactId>postgresql</artifactId>-->
-<!--				<scope>runtime</scope>-->
-<!--			</dependency>-->
-		<dependency><groupId>com.h2database</groupId><artifactId>h2</artifactId><scope>runtime</scope></dependency>
+			<!-- 4. PostgreSQL driver for PostgreSQL and TimescaleDB -->
+			<dependency>
+				<groupId>org.postgresql</groupId>
+				<artifactId>postgresql</artifactId>
+				<scope>runtime</scope>
+			</dependency>
 
 			<!-- 5. Flyway (Database Migrations for TimescaleDB extensions and tables) -->
 			<dependency>
