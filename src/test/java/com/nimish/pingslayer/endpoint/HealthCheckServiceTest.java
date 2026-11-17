@@ -1,6 +1,6 @@
 package com.nimish.pingslayer.endpoint;
 
-import com.nimish.pingslayer.model.EndpointStatus;
+import com.nimish.pingslayer.model.CheckResult;
 import com.nimish.pingslayer.model.MonitoredEndpoint;
 import com.nimish.pingslayer.service.HealthCheckService;
 import okhttp3.mockwebserver.MockResponse;
@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 class HealthCheckServiceTest {
   MockWebServer server;
   HealthCheckService service;
@@ -38,40 +39,53 @@ class HealthCheckServiceTest {
   @Test void latency_reflectsServerDelay() {
     server.enqueue(new MockResponse().setResponseCode(200).setHeadersDelay(400, TimeUnit.MILLISECONDS));
     StepVerifier.create(service.check(ep(5)))
-                .assertNext(h -> {
-                  assertEquals(EndpointStatus.UP, h.getStatus());
-                  assertTrue(h.getLatencyMs() >= 400, "latency was " + h.getLatencyMs());
-                  assertTrue(h.getLatencyMs() < 2000, "latency was " + h.getLatencyMs()); // generous, avoids CI flakiness
+                .assertNext(result -> {
+                  assertTrue(result.isSuccess());
+                  assertTrue(result.getResponseTimeMs() >= 400, "latency was " + result.getResponseTimeMs());
+                  assertTrue(result.getResponseTimeMs() < 2000, "latency was " + result.getResponseTimeMs());
                 }).verifyComplete();
   }
 
   @Test void fastResponse_hasLowLatency() {
     server.enqueue(new MockResponse().setResponseCode(200));
     StepVerifier.create(service.check(ep(5)))
-                .assertNext(h -> assertTrue(h.getLatencyMs() < 1000)).verifyComplete();
+                .assertNext(result -> assertTrue(result.getResponseTimeMs() < 1000)).verifyComplete();
   }
 
   @Test void status500_isDown() {
     server.enqueue(new MockResponse().setResponseCode(500));
     StepVerifier.create(service.check(ep(5)))
-                .assertNext(h -> { assertEquals(EndpointStatus.DOWN, h.getStatus()); assertEquals(500, h.getStatusCode()); })
+                .assertNext(result -> {
+                  assertFalse(result.isSuccess());
+                  assertEquals(500, result.getStatusCode());
+                })
                 .verifyComplete();
   }
 
   @Test void status404_isDown() {
     server.enqueue(new MockResponse().setResponseCode(404));
     StepVerifier.create(service.check(ep(5)))
-                .assertNext(h -> assertEquals(EndpointStatus.DOWN, h.getStatus())).verifyComplete();
+                .assertNext(result -> {
+                  assertFalse(result.isSuccess());
+                  assertEquals(404, result.getStatusCode());
+                }).verifyComplete();
+  }
+
+  @Test void status302_isUp() {
+    server.enqueue(new MockResponse().setResponseCode(302));
+    StepVerifier.create(service.check(ep(5)))
+                .assertNext(CheckResult::isSuccess)
+                .verifyComplete();
   }
 
   @Test void timeout_isDown_withNullStatusCode() {
     server.enqueue(new MockResponse().setResponseCode(200).setHeadersDelay(3, TimeUnit.SECONDS));
     StepVerifier.create(service.check(ep(1)))
-                .assertNext(h -> {
-                  assertEquals(EndpointStatus.DOWN, h.getStatus());
-                  assertNull(h.getStatusCode());
-                  assertNotNull(h.getErrorMessage());
-                  assertTrue(h.getLatencyMs() >= 1000);   // measured up to the timeout
+                .assertNext(result -> {
+                  assertFalse(result.isSuccess());
+                  assertNull(result.getStatusCode());
+                  assertNotNull(result.getError());
+                  assertTrue(result.getResponseTimeMs() >= 1000);
                 }).verifyComplete();
   }
 
@@ -79,7 +93,11 @@ class HealthCheckServiceTest {
     MonitoredEndpoint e = ep(2);
     server.shutdown();
     StepVerifier.create(service.check(e))
-                .assertNext(h -> { assertEquals(EndpointStatus.DOWN, h.getStatus()); assertNotNull(h.getErrorMessage()); })
+                .assertNext(result -> {
+                  assertFalse(result.isSuccess());
+                  assertNull(result.getStatusCode());
+                  assertNotNull(result.getError());
+                })
                 .verifyComplete();
   }
 }

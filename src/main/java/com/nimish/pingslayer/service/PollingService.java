@@ -1,6 +1,7 @@
 package com.nimish.pingslayer.service;
 
 import com.nimish.pingslayer.model.CheckResult;
+import com.nimish.pingslayer.model.EndpointStatus;
 import com.nimish.pingslayer.model.MonitoredEndpoint;
 import com.nimish.pingslayer.repository.CheckResultRepository;
 import com.nimish.pingslayer.repository.EndpointRepository;
@@ -48,8 +49,8 @@ public class PollingService {
                   .publishOn(virtualScheduler)             // persistence on a virtual thread
                   .doOnNext(h -> {
                     checkResultRepository.save(h);
-                    ep.setLastCheckedAt(h.getCheckedAt());
-                    endpoints.save(ep);
+                    EndpointStatus status = h.isSuccess() ? EndpointStatus.UP : EndpointStatus.DOWN;
+                    endpoints.updateStatus(ep.getId(), status, h.getCheckedAt());
                     if (!h.isSuccess()) {
                       log.warn("DOWN {} ({}): {}", ep.getName(), h.getStatusCode(), h.getError());
                     }
